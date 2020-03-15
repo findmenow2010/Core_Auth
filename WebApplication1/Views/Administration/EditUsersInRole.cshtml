@@ -1,19 +1,32 @@
-﻿@model UserRoleVm
+﻿@model List<UserRoleVm>
 
 @{
     ViewData["Title"] = "Edit Users In Role";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Edit Users In Role</h1>
-<div class="card">
-    <div class="card-header">
-        User Name : @Model.UserName
-    </div>
-    <div class="card-body">
-        @foreach(var user in Model.RoleName)
-    </div>
-    <div class="card-footer">
-
-    </div>
-</div>
+@{
+    var roleid = ViewBag.RoleID;
+}
+    <form method="post">
+        <div class="card">
+            <div class="card-header">
+                Add or Remove Users In Role
+            </div>
+            <div class="card-body">
+                @for (int x = 0; x < Model.Count; x++)
+                {
+                <div class="form-check ml-1">
+                    <input type="hidden" asp-for="@Model[x].UserID" />
+                    <input type="hidden" asp-for="@Model[x].UserName" />
+                    <input class="form-check-input" asp-for="@Model[x].IsSelected" />
+                    <label asp-for="@Model[x].IsSelected" class="form-check-label">@Model[x].UserName</label>
+                </div>
+                }
+            </div>
+            <div class="card-footer">
+                <input type="submit" class="btn btn-primary" value="Update" />
+                <a asp-action="EditPost" asp-controller="Administration" asp-route-id="@roleid" class="btn btn-primary">Cancel</a>
+            </div>
+        </div>
+        </form>

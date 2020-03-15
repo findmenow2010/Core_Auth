@@ -9,13 +9,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AuthCoreApp.Controllers
 {
-    [Authorize]
+    [Authorize(Roles ="Admin")]
     public class AdministrationController : Controller
     {
         private readonly RoleManager<IdentityRole> roleManager;
         private readonly UserManager<IdentityUser> userManager;
 
-        public AdministrationController(RoleManager<IdentityRole> roleManager,UserManager<IdentityUser> userManager)
+        public AdministrationController(RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager)
         {
             this.roleManager = roleManager;
             this.userManager = userManager;
@@ -36,12 +36,13 @@ namespace AuthCoreApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                var role = new IdentityRole {
+                var role = new IdentityRole
+                {
                     Name = _model.RoleName
                 };
 
                 var res = await roleManager.CreateAsync(role);
-                if (res.Succeeded) { return RedirectToAction("Rolelist","Administration"); }
+                if (res.Succeeded) { return RedirectToAction("Rolelist", "Administration"); }
 
                 foreach (var err in res.Errors)
                 {
@@ -66,9 +67,10 @@ namespace AuthCoreApp.Controllers
                 var role = await roleManager.FindByIdAsync(id);
                 if (role == null)
                 {
-                    ModelState.AddModelError("",$"Role with ID{id} was not found.");
+                    ModelState.AddModelError("", $"Role with ID{id} was not found.");
                 }
-                var data = new ViewModels.EditRoleVm {
+                var data = new ViewModels.EditRoleVm
+                {
                     Id = role.Id,
                     RoleName = role.Name,
                     Users = new List<string>()
@@ -88,7 +90,7 @@ namespace AuthCoreApp.Controllers
             {
                 return RedirectToAction("RoleList");
             }
-           
+
         }
         [HttpPost]
         public async Task<IActionResult> editRole(EditRoleVm role)
@@ -100,14 +102,16 @@ namespace AuthCoreApp.Controllers
                 if (oldrole == null) { ModelState.AddModelError("", "Rold Not Found"); return View("NotFound"); }
                 else { oldrole.Name = role.RoleName; }
 
-                var res =  await roleManager.UpdateAsync(oldrole);
+                var res = await roleManager.UpdateAsync(oldrole);
 
-                if (res.Succeeded) {
+                if (res.Succeeded)
+                {
                     // Update Role Users
 
                     return RedirectToAction("RoleList", "Administration");
                 }
-                else {
+                else
+                {
                     foreach (var err in res.Errors)
                     {
                         ModelState.AddModelError("", err.Description);
@@ -124,15 +128,53 @@ namespace AuthCoreApp.Controllers
 
 
         [HttpGet]
-        public IActionResult EditUsersInRole(string RoleID)
+        public async Task<IActionResult> EditUsersInRole(string RoleID)
         {
-            return View();
+            ViewBag.RoleID = RoleID;
+            var Role = await roleManager.FindByIdAsync(RoleID);
+            if (Role == null)
+            {
+                ViewBag.ErrorMessage = $"Role with ID = {RoleID} was not found.";
+                return View("NotFound");
+            }
+            var users = new List<UserRoleVm>();
+            foreach (var u in userManager.Users)
+            {
+                users.Add(new UserRoleVm
+                {
+                    UserID = u.Id,
+                    UserName = u.UserName,
+                    IsSelected = await userManager.IsInRoleAsync(u, Role.Name)
+                });
+            }
+            return View(users);
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditUsersInRole()
+        public async Task<IActionResult> EditUsersInRole(List<UserRoleVm> model, string RoleID)
         {
-            return RedirectToAction("EditRole");
+            if (ModelState.IsValid)
+            {
+                var role = await roleManager.FindByIdAsync(RoleID);
+                if (role == null)
+                { ViewBag.ErrorMessage = $"Role with ID = {RoleID} was not found."; return View("NotFound"); }
+
+                foreach (var u in model)
+                {
+                    var user = await userManager.FindByIdAsync(u.UserID);
+                    IdentityResult res = null;
+
+                    if (u.IsSelected && !(await userManager.IsInRoleAsync(user, role.Name)))
+                    {
+                        res = await userManager.AddToRoleAsync(user, role.Name);
+                    }
+                    else if (! u.IsSelected && await userManager.IsInRoleAsync(user, role.Name))
+                    {
+                        res = await userManager.RemoveFromRoleAsync(user, role.Name);
+                    }
+                }
+            }
+            return RedirectToAction("EditRole",new { id=RoleID });
         }
 
 

@@ -55,10 +55,10 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
-                        @if (User.IsInRole("Admin"))
+                        @if (signInManager.IsSignedIn(User) && User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Administration" asp-action="index">Administration</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Administration" asp-action="RoleList">Administration</a>
                             </li>
                         }
                     </ul>

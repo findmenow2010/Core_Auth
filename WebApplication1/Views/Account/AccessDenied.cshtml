@@ -1,0 +1,22 @@
+﻿
+@{
+    ViewData["Title"] = "AccessDenied";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{ 
+    var url = ViewBag.ReturnUrl;
+}
+
+
+    <div class="text-center">
+        <h1 class="text-danger">AccessDenied</h1>
+
+        <h6 class="text-danger">You don't have premission to view this resource.</h6>
+
+        <img src="~/images/images.jpg" style="height:300px; width:300px;"/>
+        <br />
+        <a href="@url" class="btn btn-success">Back</a>
+        <a href="~/Home/Index" class="btn btn-success">Back to Home</a>
+        
+    </div>
